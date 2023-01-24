@@ -102,7 +102,8 @@ def main():
         # Test the permissions
         have_perms += check_permissions(subperms, service, project)
 
-    print("All permissions: " + '\n'.join(have_perms))
+    print("[+] Your Permissions: \n- " + '\n- '.join(have_perms))
+    print("")
 
 
 if __name__ == "__main__":
