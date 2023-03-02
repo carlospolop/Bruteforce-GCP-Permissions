@@ -3,8 +3,8 @@
 Find which permissions the service account has access to
 
 ```bash
-python3 my_gcp_perms.py -h
-usage: my_gcp_perms.py [-h] -p PROJECT (-c CREDENTIALS | -t TOKEN)
+python3 bf_my_gcp_perms.py -h
+usage: bf_my_gcp_perms.py [-h] -p PROJECT (-c CREDENTIALS | -t TOKEN)
 
 Check the permissions of a service account
 
@@ -18,8 +18,8 @@ optional arguments:
                         Raw access token
 
 # Using json creds
-python3 my_gcp_perms.py -c /tmp/credentials.json -p project-name-1232
+python3 bf_my_gcp_perms.py -c /tmp/credentials.json -p project-name-1232
 
 # Using raw token
-python3 my_gcp_perms.py -t <token> -p project-name-1232
+python3 bf_my_gcp_perms.py -t <token> -p project-name-1232
 ```
