@@ -6,6 +6,7 @@ import re
 from bs4 import BeautifulSoup
 
 from google.oauth2 import service_account
+import google.oauth2.credentials
 import googleapiclient.discovery
 from time import sleep
 
@@ -70,11 +71,22 @@ def divide_chunks(l, n):
 def main():
     parser = argparse.ArgumentParser(description='Check the permissions of a service account')
     parser.add_argument('-p','--project', help='Name of the project to use', required=True)
-    parser.add_argument('-c','--credentials', help='Path to credentials.json', required=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-c','--credentials', help='Path to credentials.json')
+    group.add_argument('-t','--token', help='Raw access token')
     args = vars(parser.parse_args())
 
     project = args['project']
-    credentials_path = args['credentials']
+    if args.get('token'):
+        access_token = args['token']
+        credentials = google.oauth2.credentials.Credentials(access_token.rstrip())
+    else:
+        credentials_path = args['credentials']
+        # Create the service account credentials
+        credentials = service_account.Credentials.from_service_account_file(
+            credentials_path,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
 
     # Load permissions from permissions.json
     list_perms = list(set(download_gcp_permissions()))
@@ -83,12 +95,6 @@ def main():
         return
 
     print(f"Downloaded {len(list_perms)} GCP permissions")
-    
-    # Create the service account credentials
-    credentials = service_account.Credentials.from_service_account_file(
-        credentials_path,
-        scopes=["https://www.googleapis.com/auth/cloud-platform"],
-    )
 
     # Create the service account client
     service = googleapiclient.discovery.build(
