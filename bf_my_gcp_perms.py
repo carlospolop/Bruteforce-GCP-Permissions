@@ -29,16 +29,27 @@ def download_gcp_permissions():
 
     return results
 
-def check_permissions(perms, service, project, verbose):
+def check_permissions(perms, service, project, folder, org, verbose):
     """Test if the user has the indicated permissions"""
 
-    # Wait 1 second to avoid hitting the rate limit
+    # Get the permissions
+    if project:
+        req = service.projects().testIamPermissions(
+            resource=project,
+            body={"permissions": perms},
+        )
 
-    # Get the permissions for the current project
-    req = service.projects().testIamPermissions(
-        resource=project,
-        body={"permissions": perms},
-    )
+    elif folder:
+        req = service.folders().testIamPermissions(
+            resource="folders/"+folder,
+            body={"permissions": perms},
+        )
+
+    elif org:
+        req = service.organizations().testIamPermissions(
+            resource="organizations/" +org,
+            body={"permissions": perms},
+        )
 
     have_perms = []
 
@@ -49,7 +60,7 @@ def check_permissions(perms, service, project, verbose):
         for perm in perms:
             if " "+perm+" " in str(e): #Add spaces to avoid problems
                 perms.remove(perm)
-                return check_permissions(perms, service, project, verbose)
+                return check_permissions(perms, service, project, folder, org, verbose)
         
     except Exception as e:
         print("Error:")
@@ -68,8 +79,15 @@ def divide_chunks(l, n):
  
 
 def main():
-    parser = argparse.ArgumentParser(description='Check the permissions of a service account')
-    parser.add_argument('-p','--project', help='Name of the project to use', required=True)
+    parser = argparse.ArgumentParser(description='Check your permissions over an specific GCP project, folder or organization.')
+    # Create a mutual exclusion group
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    # Add arguments to the group
+    group.add_argument('-p', '--project', help='Name of the project to use (e.g. digital-bonfire-186309)')
+    group.add_argument('-f', '--folder', help='ID of the folder to use (e.g. 433637338589)')
+    group.add_argument('-o', '--organization', help='ID of the organization to use (e.g. 433637338589)')
+
     parser.add_argument('-v','--verbose', help='Print the found permissions as they are found', action='store_true')
     parser.add_argument('-T','--threads', help='Number of threads to use, be careful with rate limits. Default is 3.', default=3, type=int)
     parser.add_argument('-s','--services', help='Comma separated list of GCP service by its api names to check only (e.g. filtering top 10 services: -s iam.,compute.,storage.,container.,bigquery.,cloudfunctions.,pubsub.,sqladmin.,cloudkms.,secretmanager.). Default is all services.', default='', type=str)
@@ -80,6 +98,9 @@ def main():
     args = vars(parser.parse_args())
 
     project = args['project']
+    folder = args['folder']
+    org = args['organization']
+
     verbose = args['verbose']
     n_threads = int(args['threads'])
     services_grep = [s.strip() for s in args['services'].split(',')] if args['services'] else []
@@ -117,19 +138,32 @@ def main():
         # Create the service account client
         # Create 1 per thread to avoid errors!
         service = googleapiclient.discovery.build(
-            "cloudresourcemanager", "v1", credentials=credentials
+            "cloudresourcemanager", "v3", credentials=credentials
         )
 
         # Test the permissions
-        perms = check_permissions(subperms, service, project, verbose)
+        perms = check_permissions(subperms, service, project, folder, org, verbose)
         with have_perms_lock:  # Ensure thread-safe update of have_perms
             have_perms.extend(perms)
+    
+    def handle_future(future, progress):
+        try:
+            result = future.result()  # This will re-raise any exception caught in the thread
+            # Process result if needed
+        except Exception as exc:
+            print(f"Thread resulted in an exception: {exc}")
+        finally:
+            progress.update(1)  # Ensure progress is updated even if there's an exception
 
-    # Setup ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=n_threads) as executor, tqdm.tqdm(total=len(divided_list_perms)) as progress:
-        futures = {executor.submit(thread_function, subperms): subperms for subperms in divided_list_perms}
-        for future in concurrent.futures.as_completed(futures):
-            progress.update(1)  # Update tqdm progress for each completed thread
+    with concurrent.futures.ThreadPoolExecutor(max_workers=n_threads) as executor:
+        # Initialize tqdm progress bar
+        with tqdm.tqdm(total=len(divided_list_perms)) as progress:
+            # Submit tasks to the executor
+            futures = [executor.submit(thread_function, subperms) for subperms in divided_list_perms]
+            
+            # As each future completes, handle it
+            for future in concurrent.futures.as_completed(futures):
+                handle_future(future, progress)
 
     print("[+] Your Permissions: \n- " + '\n- '.join(have_perms))
     print("")
