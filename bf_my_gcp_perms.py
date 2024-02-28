@@ -35,7 +35,7 @@ def check_permissions(perms, service, project, folder, org, verbose):
     # Get the permissions
     if project:
         req = service.projects().testIamPermissions(
-            resource=project,
+            resource="projects/"+project,
             body={"permissions": perms},
         )
 
