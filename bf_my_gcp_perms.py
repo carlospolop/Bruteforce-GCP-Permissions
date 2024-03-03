@@ -57,6 +57,10 @@ def check_permissions(perms, service, project, folder, org, verbose):
         returnedPermissions = req.execute()
         have_perms = returnedPermissions.get("permissions", [])
     except googleapiclient.errors.HttpError as e: # Example error: <HttpError 400 when requesting https://cloudresourcemanager.googleapis.com/v1/projects/digital-bonfire-410512:testIamPermissions?alt=json returned "Permission policyremediatormanager.remediatorServices.enable is not valid for this resource.". Details: "Permission policyremediatormanager.remediatorServices.enable is not valid for this resource.">
+        if "Cloud Resource Manager API has not been used" in str(e):
+            print(str(e) + "\n Try to enable the service running: gcloud services enable cloudresourcemanager.googleapis.com")
+            exit(1)
+
         for perm in perms:
             if " "+perm+" " in str(e): #Add spaces to avoid problems
                 perms.remove(perm)

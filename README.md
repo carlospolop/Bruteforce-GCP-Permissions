@@ -2,6 +2,9 @@
 
 Find which permissions a GCP principals has access to (you need to have credentials for it).
 
+Note that if the project doesn't have enabled the service ` cloudresourcemanager.googleapis.com`, it won't be possible to perform this action!
+So, check that the service is enabled in the project from where you are checking.
+
 ```bash
 python3 bf_my_gcp_perms.py -h
 usage: bf_my_gcp_perms.py [-h] (-p PROJECT | -f FOLDER | -o ORGANIZATION) [-v] [-T THREADS]
