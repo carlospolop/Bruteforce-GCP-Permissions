@@ -1,4 +1,4 @@
-# bf_my_gcp_perms
+# Bruteforce GCP permissions
 
 Find which permissions a GCP principals has access to (you need to have credentials for it).
 
