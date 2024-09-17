@@ -14,12 +14,8 @@ from threading import Lock
 def download_gcp_permissions():
     """Get list with all permissions og GCP (copied and modified from https://github.com/iann0036/iam-dataset/blob/main/gcp_get_permissions.py)"""
 
-    base_ref_page = requests.get("https://cloud.google.com/iam/docs/permissions-reference").text
-    frame_page_url = re.search('<iframe src="([^"]+)"', base_ref_page).group(1)
-    if frame_page_url[0] == "/":
-        frame_page_url = "https://cloud.google.com" + frame_page_url
-    frame_page = requests.get(frame_page_url).text
-    parsed_frame_page = BeautifulSoup(frame_page, features="lxml")
+    base_ref_page = requests.get("https://cloud.google.com/iam/docs/permissions-reference?partial=").text
+    parsed_frame_page = BeautifulSoup(base_ref_page, features="lxml")
 
     results = []
 
