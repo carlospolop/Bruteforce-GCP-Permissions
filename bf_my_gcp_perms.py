@@ -15,7 +15,9 @@ def download_gcp_permissions():
     """Get list with all permissions og GCP (copied and modified from https://github.com/iann0036/iam-dataset/blob/main/gcp_get_permissions.py)"""
 
     base_ref_page = requests.get("https://cloud.google.com/iam/docs/permissions-reference").text
-    frame_page_url = re.search('<iframe src="([^"]+)"', base_ref_page).group(1)
+    results = re.findall('<td id="([^"]+)"', base_ref_page)
+    
+    """frame_page_url = re.search('<td id="([^"]+)"', base_ref_page).group(1)
     if frame_page_url[0] == "/":
         frame_page_url = "https://cloud.google.com" + frame_page_url
     frame_page = requests.get(frame_page_url).text
@@ -23,10 +25,11 @@ def download_gcp_permissions():
 
     results = []
 
-    for row in parsed_frame_page.find('tbody').find_all('tr'):
+    for row in frame_page_url.find('tbody').find_all('tr'):
         permission = row.find_all('td')[0].get('id')
         results.append(permission)
-
+    
+    """
     return results
 
 def check_permissions(perms, service, project, folder, org, verbose):
