@@ -1,3 +1,5 @@
+# Check GCPPEASS from [https://github.com/carlospolop/cloudpeass](https://github.com/carlospolop/cloudpeass) for an updated version of this script
+
 # Bruteforce GCP permissions
 
 Find which permissions a GCP principals has access to (you need to have credentials for it).
