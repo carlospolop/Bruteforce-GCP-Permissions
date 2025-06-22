@@ -14,7 +14,7 @@ from threading import Lock
 def download_gcp_permissions():
     """Get list with all permissions og GCP (copied and modified from https://github.com/iann0036/iam-dataset/blob/main/gcp_get_permissions.py)"""
 
-    base_ref_page = requests.get("https://cloud.google.com/iam/docs/permissions-reference").text
+    base_ref_page = requests.get("https://web.archive.org/web/20250513111931/https://cloud.google.com/iam/docs/permissions-reference").text
     results = re.findall('<td id="([^"]+)"', base_ref_page)
     
     """frame_page_url = re.search('<td id="([^"]+)"', base_ref_page).group(1)
